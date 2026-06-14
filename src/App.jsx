@@ -391,7 +391,6 @@ export default function App() {
                     <span className="absolute -left-4 top-0 bg-[#111] px-1 z-10">
                       {hour > 12 ? hour - 12 : hour}{hour >= 12 ? 'pm' : 'am'}
                     </span>
-                    <div className="absolute left-0 top-6 bottom-[-300px] w-px bg-white/5" />
                   </div>
                 ))}
               </div>
@@ -402,7 +401,7 @@ export default function App() {
                   <div className="text-center py-8 text-slate-500 font-bold uppercase tracking-widest">No classes scheduled for the squad today.</div>
                 ) : (
                   squadData.filter(s => s.classes.length > 0).map(({ id, user, classes, freeBlocks }) => (
-                    <div key={id} className="relative h-16 flex items-center group">
+                    <div key={id} className="relative h-16 flex items-center">
                       {/* User Name Label */}
                       <div className="w-[100px] shrink-0 flex items-center gap-2 pr-4 z-10 bg-[#111] h-full">
                         <Avatar user={user} size="w-8 h-8" />
@@ -410,20 +409,19 @@ export default function App() {
                       </div>
                       
                       {/* Timeline Track */}
-                      <div className="flex-1 relative h-12 bg-black/40 rounded-xl overflow-hidden ring-1 ring-white/10">
+                      <div className="flex-1 relative h-12 bg-black/40 rounded-xl ring-1 ring-white/10">
                         
                         {/* Render Free Blocks */}
                         {freeBlocks.map((f, i) => {
-                          const totalDuration = DAY_END - DAY_START; // 540 mins
+                          const totalDuration = DAY_END - DAY_START;
                           const left = ((f.start - DAY_START) / totalDuration) * 100;
                           const width = ((f.end - f.start) / totalDuration) * 100;
                           return (
                             <div 
                               key={`free-${i}`} 
-                              className="absolute top-0 bottom-0 bg-emerald-500/10 border-x border-emerald-500/20 flex items-center justify-center"
+                              className="absolute top-0 bottom-0 bg-emerald-500/10 border-x border-emerald-500/20 flex items-center justify-center rounded-xl"
                               style={{ left: `${left}%`, width: `${width}%` }}
                             >
-                              {/* Only show "Free" text if block is wide enough */}
                               {width > 8 && <span className="text-[10px] font-black text-emerald-500/50 uppercase tracking-widest">Free</span>}
                             </div>
                           );
@@ -439,13 +437,12 @@ export default function App() {
                           const left = ((startMins - DAY_START) / totalDuration) * 100;
                           const width = ((endMins - startMins) / totalDuration) * 100;
                           
-                          // Check if it's a shared class for highlight
                           const isShared = sharedClasses.some(sc => sc.course === c.course && sc.start === c.start);
 
                           return (
                             <div 
                               key={`class-${i}`}
-                              className={`absolute top-0 bottom-0 ${user.color} rounded-lg flex flex-col justify-center px-2 shadow-lg border border-white/20 transition-all hover:scale-105 cursor-pointer overflow-hidden z-20`}
+                              className={`group/block absolute top-0 bottom-0 ${user.color} rounded-lg flex flex-col justify-center px-2 shadow-lg border border-white/20 transition-colors hover:brightness-110 cursor-pointer overflow-hidden z-20`}
                               style={{ left: `${left}%`, width: `${width}%` }}
                             >
                               <div className="flex items-center justify-between">
@@ -454,8 +451,8 @@ export default function App() {
                               </div>
                               <span className="text-[9px] font-bold text-white/80 truncate">{c.room}</span>
                               
-                              {/* Hover Details */}
-                              <div className="absolute hidden group-hover:block bottom-full mb-2 left-1/2 -translate-x-1/2 bg-white text-black p-3 rounded-xl whitespace-nowrap z-50 shadow-2xl">
+                              {/* Hover Tooltip - scoped to this block only */}
+                              <div className="absolute invisible opacity-0 group-hover/block:visible group-hover/block:opacity-100 transition-all duration-200 bottom-full mb-2 left-1/2 -translate-x-1/2 bg-white text-black p-3 rounded-xl whitespace-nowrap z-50 shadow-2xl pointer-events-none">
                                 <div className="font-black text-sm">{c.course}</div>
                                 <div className="text-slate-600 font-bold">{formatTime(timeToMinutes(c.start))} - {formatTime(timeToMinutes(c.end))}</div>
                                 <div className="text-blue-600 font-bold mt-1">{c.room} ({extractFloor(c.room)})</div>
@@ -470,16 +467,20 @@ export default function App() {
               </div>
 
               {/* Live Time Indicator */}
-              {isToday && currentMinutes >= DAY_START && currentMinutes <= DAY_END && (
-                <div 
-                  className="absolute top-0 bottom-0 w-[2px] bg-rose-500 z-30 pointer-events-none"
-                  style={{ left: `calc(100px + ${((currentMinutes - DAY_START) / (DAY_END - DAY_START)) * 100}%)` }}
-                >
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-rose-500 text-white text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-widest shadow-[0_0_10px_rgba(244,63,94,0.5)]">
-                    Now
+              {isToday && currentMinutes >= DAY_START && currentMinutes <= DAY_END && (() => {
+                const timelineWidth = 800 - 100; // min-w-[800px] minus label width
+                const pxOffset = 100 + ((currentMinutes - DAY_START) / (DAY_END - DAY_START)) * timelineWidth;
+                return (
+                  <div 
+                    className="absolute top-0 bottom-0 w-[2px] bg-rose-500 z-30 pointer-events-none"
+                    style={{ left: `${pxOffset}px` }}
+                  >
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-rose-500 text-white text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-widest shadow-[0_0_10px_rgba(244,63,94,0.5)]">
+                      Now
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
             </div>
           </div>
         </section>
